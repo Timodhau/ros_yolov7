@@ -1,0 +1,6 @@
+<launch>
+  <param name="/start_yolo_module" type="bool" value="true" />
+  <param name="/topic_img" type="str" value="/pepper_robot/camera/front/image_raw" />
+  <param name="/path_yolo_model" type="str" value="../Downloads/multimodal-system/modules/yolov7-pose-estimation/" />
+  <node name="module_yolo" pkg="ros_yolov7" type="ros_pose_estimate.py" respawn="true" output="screen" launch-prefix="../env/yoloV9/bin/python" />
+</launch>
