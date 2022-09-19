@@ -83,7 +83,7 @@ class RosYolo:
                     cv2.rectangle(im0, (int(xmin), int(ymin)), (int(xmax), int(ymax)), color=(255, 0, 0),
                                   thickness=1, lineType=cv2.LINE_AA)
                 if len(output) == 0:
-                    self.kp_bbox_pub.publish("empty")
+                    self.kp_bbox_pub.publish(BboxKpList())
                 else:
                     self.publish_bbox_kp(output, bbox_per_id)
             except CvBridgeError as e:
@@ -107,6 +107,7 @@ class RosYolo:
                 tracking.bbox = bbox_per_id_[idx]
                 tracking.kp = output_[idx, 7:]
             tracking_list.append(tracking)
+        print(f"tracking_list ")
         data_to_send.subjects = tracking_list
         self.kp_bbox_pub.publish(data_to_send)
         # print("------------------------------------")
