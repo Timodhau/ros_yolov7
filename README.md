@@ -12,7 +12,8 @@ Configure launch file: <br/>
   <li>use launch-prefix if you want to start the node with a python env, else remove it</li>
 </ul>
 
-start with: /
+start with: 
 <pre><code>roslaunch ros_yolov7 pose_estimate.launch
 </code></pre>
 
+An example of subscriber is in src/ directory
