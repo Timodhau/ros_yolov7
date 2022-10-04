@@ -107,7 +107,6 @@ class RosYolo:
                 tracking.bbox = bbox_per_id_[idx]
                 tracking.kp = output_[idx, 7:]
             tracking_list.append(tracking)
-        print(f"tracking_list ")
         data_to_send.subjects = tracking_list
         self.kp_bbox_pub.publish(data_to_send)
         # print("------------------------------------")
@@ -116,17 +115,12 @@ class RosYolo:
 
 
 if __name__ == "__main__":
-    start = rospy.get_param("/start_yolo_module")
     # rosnode initialization
     rospy.init_node('yolo_module', anonymous=False)
-    if start:
-        ros_yolo = RosYolo()
-        try:
-            rospy.spin()
-        except KeyboardInterrupt:
-            print("Shutting down")
-        cv2.destroyAllWindows()
-    else:
-        rospy.loginfo("Not starting YOLO_MODULE")
-        while not rospy.is_shutdown():
-            rospy.Rate(1)
+    ros_yolo = RosYolo()
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        print("Shutting down")
+    cv2.destroyAllWindows()
+
