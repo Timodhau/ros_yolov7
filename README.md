@@ -1,4 +1,4 @@
-# ros_yolov7
+# ros yolov7 bounding boxes + body keypoints
 Ros package publishing ros yolov7 output tested with ros noetic but should would with others ros versions aswell <br/>
 
 Based on https://github.com/RizwanMunawar/yolov7-pose-estimation <br/>
