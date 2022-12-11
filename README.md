@@ -17,3 +17,11 @@ start with:
 </code></pre>
 
 An example of subscriber is in src/ directory
+
+Packages installations
+    
+    cd /src
+    pip install -r requirements.txt
+    pip install --extra-index-url https://rospypi.github.io/simple/ rospy rosbag rospkg
+    pip install scikit-learn==0.22.2 --upgrade
+    
