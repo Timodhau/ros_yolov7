@@ -4,7 +4,7 @@ import distutils.log
 distutils.log.set_verbosity(distutils.log.DEBUG)  # Set DEBUG level
 
 d = generate_distutils_setup(
-    packages=['models','utils'],
+    packages=['models','utils','deep_sort'],
     package_dir={'': 'src'}
 )
 
