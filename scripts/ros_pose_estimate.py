@@ -47,8 +47,8 @@ class RosYolo:
         self.cpt = 0
 
         # DeepSort initialization
-        self.deepsort = DeepSort(self.DEEPSORT_WEIGHT, max_dist=0.3, min_confidence=0.6, nms_max_overlap=1.0,
-                                 max_iou_distance=0.7, max_age=5000, n_init=5, nn_budget=100, use_cuda=True)
+        self.deepsort = DeepSort(self.DEEPSORT_WEIGHT, max_dist=0.2, min_confidence=0.3, nms_max_overlap=1.0,
+                                 max_iou_distance=0.7, max_age=70, n_init=4, nn_budget=100, use_cuda=True)
 
     @torch.no_grad()
     def callback(self, data):
@@ -97,18 +97,19 @@ class RosYolo:
                     # Plotting key points on Image
                     cv2.rectangle(im0, (int(xmin), int(ymin)), (int(xmax), int(ymax)), color=(255, 0, 0),
                                   thickness=1, lineType=cv2.LINE_AA)
-                deepsort_tracking = self.deepsort.update(np.array(deepsort_bboxes), confidence_per_id, image_)
-                if len(output) == 0 and len(deepsort_tracking)==0:
+                if len(output) == 0:
                     self.kp_bbox_pub.publish(BboxKpList())
-                elif len(bbox_per_id)==len(deepsort_tracking):
-                    assignment_list = self.pair_dpbbox(bbox_per_id, deepsort_tracking)
-                    for id, bbox in enumerate(bbox_per_id):
-                        if id < len(deepsort_tracking):
-                            deepsort_id = deepsort_tracking[assignment_list[id]][-1]
-                            cv2.putText(img=im0, text=str(deepsort_id), org=(int(bbox[0]), int(bbox[1])),
-                                        fontFace=cv2.FONT_HERSHEY_TRIPLEX,
-                                        fontScale=1, color=(255, 0, 0), thickness=2)
-                    self.publish_bbox_kp(bbox_per_id, kp_per_id, deepsort_tracking, assignment_list)
+                else:
+                    deepsort_tracking = self.deepsort.update(np.array(deepsort_bboxes), confidence_per_id, image_)
+                    if len(bbox_per_id)==len(deepsort_tracking):
+                        assignment_list = self.pair_dpbbox(bbox_per_id, deepsort_tracking)
+                        for id, bbox in enumerate(bbox_per_id):
+                            if id < len(deepsort_tracking):
+                                deepsort_id = deepsort_tracking[assignment_list[id]][-1]
+                                cv2.putText(img=im0, text=str(deepsort_id), org=(int(bbox[0]), int(bbox[1])),
+                                            fontFace=cv2.FONT_HERSHEY_TRIPLEX,
+                                            fontScale=1, color=(255, 0, 0), thickness=2)
+                        self.publish_bbox_kp(bbox_per_id, kp_per_id, deepsort_tracking, assignment_list)
             except CvBridgeError as e:
                 print(e)
             cv2.imshow("Image window", im0)
@@ -225,6 +226,7 @@ if __name__ == "__main__":
     # rosnode initialization
     rospy.init_node('yolo_module', anonymous=False)
     ros_yolo = RosYolo()
+    time.sleep(0.2)
     try:
         rospy.spin()
     except KeyboardInterrupt:
