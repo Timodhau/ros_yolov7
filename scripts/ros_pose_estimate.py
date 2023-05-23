@@ -32,11 +32,6 @@ class RosYolo:
 
         self.bridge = CvBridge()
 
-        # ROS Topics
-        # self.image_sub = rospy.Subscriber("/usb_cam/image_raw/", Image, self.callback)
-        self.image_sub = rospy.Subscriber(self.TOPIC_IMG, Image, self.callback)
-        self.kp_bbox_pub = rospy.Publisher("/refined_perception/kp_bbox", BboxKpList, queue_size=0)
-
         # select device
         self.DEVICE = select_device(self.DEVICE)
         # Load model
@@ -49,6 +44,11 @@ class RosYolo:
         # DeepSort initialization
         self.deepsort = DeepSort(self.DEEPSORT_WEIGHT, max_dist=0.2, min_confidence=0.3, nms_max_overlap=1.0,
                                  max_iou_distance=0.7, max_age=70, n_init=4, nn_budget=100, use_cuda=True)
+
+        # ROS Topics
+        # self.image_sub = rospy.Subscriber("/usb_cam/image_raw/", Image, self.callback)
+        self.image_sub = rospy.Subscriber(self.TOPIC_IMG, Image, self.callback)
+        self.kp_bbox_pub = rospy.Publisher("/refined_perception/kp_bbox", BboxKpList, queue_size=0)
 
     @torch.no_grad()
     def callback(self, data):

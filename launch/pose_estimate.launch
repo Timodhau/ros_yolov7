@@ -1,5 +1,5 @@
 <launch>
   <param name="/topic_img" type="str" value="/pepper_robot/camera/front/image_raw" />
-  <param name="/path_models" type="str" value="path_to/ros_yolov7/src/checkpoints/" />
-  <node if="true" name="module_yolo" pkg="ros_yolov7" type="ros_pose_estimate.py" respawn="true" output="screen" launch-prefix="path_to_py_env/yoloV9/bin/python" />
+  <param name="/path_models" type="str" value="$(env ROS_MUDIALBOT_YOLO_MODELS_PATH)" />
+  <node if="true" name="module_yolo" pkg="ros_yolov7" type="ros_pose_estimate.py" respawn="true" output="screen" launch-prefix="$(env ROS_MUDIALBOT_YOLO_PYTHON_PATH)" />
 </launch>

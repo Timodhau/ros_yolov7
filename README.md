@@ -24,4 +24,16 @@ Packages installations
     pip install -r requirements.txt
     pip install --extra-index-url https://rospypi.github.io/simple/ rospy rosbag rospkg
     pip install scikit-learn==0.22.2 --upgrade
-    
+# ros module documentation
+## formats used
+### BboxKp
+- int64 id : a user's id
+- float64[] bbox : a user's bounding boxes
+- float64[] kp : a user's keypoints
+### BboxKpList
+- BboxKp[] subjects : a list of BboxKp
+## ROS topics
+### subscribed to
+- [topic_img] (the parameter defined in the launch file) : Image, the image stream feeded to the service
+### published
+- /refined_perception/kp_bbox : BboxKpList, the users' bounding boxes and keypoints, useful for identifying them and interpret their position/body posture
