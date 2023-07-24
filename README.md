@@ -25,6 +25,10 @@ Packages installations
     pip install --extra-index-url https://rospypi.github.io/simple/ rospy rosbag rospkg
     pip install scikit-learn==0.22.2 --upgrade
 # ros module documentation
+## launching the module with Docker
+to launch the module independently, the following docker-compose command must be run (**from the parent directory of the catkin workspace) :
+`docker-compose -f catkin_ws/src/ros_yolov7/docker-compose.yml --env-file catkin_ws/src/ros_yolov7/.env -d`
+it is also possible to run the command `docker-compose up -d` from this directory
 ## formats used
 ### BboxKp
 - int64 id : a user's id
