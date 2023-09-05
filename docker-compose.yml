@@ -1,28 +1,5 @@
-# http://wiki.ros.org/docker/Tutorials/Compose
 version: "3.9"
 services:
-  master:
-    container_name: ros-master
-    image: ros:noetic
-    command: stdbuf -o L roscore
-    networks:
-      - ros
-    restart: always
-  # pour les tests uniquement, à commenter en production
-  bag:
-    container_name: ros-bag
-    tty: true
-    image: ros:noetic
-    working_dir: /bag
-    command: rosbag play /bag/$ROS_BAG_NAME.bag
-    volumes:
-      - $ROS_BAG_FOLDER:/bag
-    networks:
-      - ros
-    depends_on:
-      - master
-    env_file: .env
-    restart: always
   ros_yolo:
     working_dir: $WORKSPACE_NAME
     command: bash -c "source devel/setup.bash && roslaunch ros_yolov7 pose_estimate.launch"
@@ -50,12 +27,6 @@ services:
       - $HOST_CONFIG_FOLDER:$ROS_MUDIALBOT_CONFIG_PATH
       - $HOST_DATA_FOLDER:$DATA_FOLDER
       - $X11_SOCKET:$X11_SOCKET
-    networks:
-      - ros
     restart: always
-    depends_on:
-      - master
-networks:
-  ros:
-    driver: bridge
+    network_mode: host
 
