@@ -6,7 +6,7 @@ import sys
 import rospy
 from cv_bridge import CvBridge, CvBridgeError
 from ros_yolov7.msg import BboxKpList, BboxKp
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 import numpy as np
 import cv2
 import torch
@@ -47,14 +47,16 @@ class RosYolo:
 
         # ROS Topics
         # self.image_sub = rospy.Subscriber("/usb_cam/image_raw/", Image, self.callback)
-        self.image_sub = rospy.Subscriber(self.TOPIC_IMG, Image, self.callback)
+        self.image_sub = rospy.Subscriber(self.TOPIC_IMG, CompressedImage, self.callback)
         self.kp_bbox_pub = rospy.Publisher("/refined_perception/kp_bbox", BboxKpList, queue_size=0)
 
     @torch.no_grad()
     def callback(self, data):
         if self.loading:
             try:
-                cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")  # (480, 640, 3)
+                pixels = np.asarray(bytearray(data.data), dtype='uint8')
+                cv_image = cv2.imdecode(pixels, cv2.IMREAD_COLOR)
+                # cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")  # (480, 640, 3)
                 # cv_image = np.asarray(self.bridge.imgmsg_to_cv2(data, '8UC1'))
                 image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
                 image = letterbox(image, (640), stride=64, auto=True)[0]
