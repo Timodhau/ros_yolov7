@@ -1,4 +1,4 @@
-from ros_yolov7.msg import BboxKpList, BboxKp
+from body_tracking_msgs.msg import BboxKpList, BboxKp
 import rospy
 
 

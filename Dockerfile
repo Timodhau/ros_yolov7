@@ -31,6 +31,7 @@ RUN pip3 install --ignore-installed -r requirements.txt
 RUN rm requirements.txt
 RUN mkdir -p $CLIENT_SRC_FOLDER
 COPY $HOST_WORKSPACE_SRC_FOLDER/$ROS_MODULE_NAME $CLIENT_SRC_FOLDER/$ROS_MODULE_NAME
+COPY $HOST_WORKSPACE_SRC_FOLDER/mudialbot_msgs $CLIENT_SRC_FOLDER/mudialbot_msgs
 WORKDIR $WORKSPACE_NAME
 ENV PATH="$PATH:$VIRTUAL_ENV"
 RUN [ "/bin/bash", "-c", "source /opt/ros/${ROS_DISTRO}/setup.bash && catkin_make" ]
