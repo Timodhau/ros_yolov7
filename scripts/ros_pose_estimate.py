@@ -5,7 +5,7 @@ import sys
 
 import rospy
 from cv_bridge import CvBridge, CvBridgeError
-from ros_yolov7.msg import BboxKpList, BboxKp
+from body_tracking_msgs.msg import BboxKpList, BboxKp
 from sensor_msgs.msg import Image, CompressedImage
 import numpy as np
 import cv2

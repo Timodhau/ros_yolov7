@@ -17,11 +17,11 @@ catkin_python_setup()
 
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  BboxKp.msg
-  BboxKpList.msg
-)
+# add_message_files(
+#   FILES
+#   BboxKp.msg
+#   BboxKpList.msg
+# )
 
 # Generate added messages and services with any dependencies listed here
 generate_messages(
