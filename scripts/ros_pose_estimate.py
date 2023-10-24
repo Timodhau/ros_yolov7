@@ -139,6 +139,7 @@ class RosYolo:
             tracking_list.append(tracking)
         if len(tracking_list) > 0:
             data_to_send.subjects = tracking_list
+            data_to_send.header.stamp = rospy.Time.now()
             self.kp_bbox_pub.publish(data_to_send)
 
     def pair_dpbbox(self, bbox_per_id, bbox_deepsort):
