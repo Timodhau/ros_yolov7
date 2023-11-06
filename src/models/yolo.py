@@ -1,24 +1,26 @@
 import argparse
-import logging
-import sys
 from copy import deepcopy
+import logging
+from models.common import *
+from models.experimental import *
+import os
+from utils.autoanchor import check_anchor_order
+from utils.general import make_divisible, check_file, set_logging
+from utils.loss import SigmoidBin
+from utils.torch_utils import time_synchronized, fuse_conv_and_bn, model_info, scale_img, initialize_weights, \
+    select_device, copy_attr
+import sys
+import torch
 
 sys.path.append('./')  # to run '$ python *.py' files in subdirectories
 logger = logging.getLogger(__name__)
-import torch
-from models.common import *
-from models.experimental import *
-from utils.autoanchor import check_anchor_order
-from utils.general import make_divisible, check_file, set_logging
-from utils.torch_utils import time_synchronized, fuse_conv_and_bn, model_info, scale_img, initialize_weights, \
-    select_device, copy_attr
-from utils.loss import SigmoidBin
 
 try:
     import thop  # for FLOPS computation
 except ImportError:
     thop = None
 
+DEBUG = os.getenv('DEBUG') == 'True'
 
 class Detect(nn.Module):
     stride = None  # strides computed during build
@@ -606,7 +608,8 @@ class Model(nn.Module):
     #             print('%10.3g' % (m.w.detach().sigmoid() * 2))  # shortcut weights
 
     def fuse(self):  # fuse model Conv2d() + BatchNorm2d() layers
-        print('Fusing layers... ')
+        if DEBUG:
+            print('Fusing layers... ')
         for m in self.model.modules():
             if isinstance(m, RepConv):
                 #print(f" fuse_repvgg_block")
@@ -622,6 +625,8 @@ class Model(nn.Module):
                 m.fuse()
                 m.forward = m.fuseforward
         self.info()
+        if DEBUG:
+            print('Layers fused')
         return self
 
     def nms(self, mode=True):  # add or remove NMS module
