@@ -1,11 +1,11 @@
 FROM ros:noetic
+ARG CLIENT_SRC_FOLDER
 ARG HOST_WORKSPACE_FOLDER
-ARG VIRTUAL_ENV
-ARG WORKSPACE_NAME
+ARG HOST_WORKSPACE_SRC_FOLDER
 ARG REQUIREMENTS_FILE
 ARG ROS_MODULE_NAME
-ARG CLIENT_SRC_FOLDER
-ARG HOST_WORKSPACE_SRC_FOLDER
+ARG VIRTUAL_ENV
+ARG WORKSPACE_NAME
 # https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
 # changer le shell par défaut pour pouvoir lancer `source`
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh

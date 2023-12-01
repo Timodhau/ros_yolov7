@@ -1,5 +1,5 @@
 <launch>
-  <param name="/topic_img" type="str" value="/robot/camera/front/compressed" />
-  <param name="/path_models" type="str" value="$(env ROS_MUDIALBOT_YOLO_MODELS_PATH)" />
-  <node if="true" name="module_yolo" pkg="ros_yolov7" type="ros_pose_estimate.py" respawn="true" output="screen" launch-prefix="$(env ROS_MUDIALBOT_YOLO_PYTHON_PATH)" />
+  <param name="/topic_img" type="str" value="$(env TOPIC_IMG)" />
+  <param name="/path_models" type="str" value="$(env DATA_FOLDER)" />
+  <node name="module_yolo_3" pkg="ros_yolov7" type="ros_pose_estimate.py" respawn="false" output="screen" launch-prefix="$(env YOLO_PYTHON_PATH)" />
 </launch>

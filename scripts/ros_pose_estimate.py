@@ -1,38 +1,46 @@
-#!/home/tim/env/yoloV9/bin/python
-
-import sys
-# print(sys.path)
-
-import rospy
-from cv_bridge import CvBridge, CvBridgeError
 from body_tracking_msgs.msg import BboxKpList, BboxKp
-from sensor_msgs.msg import Image, CompressedImage
-import numpy as np
-import cv2
-import torch
-from torchvision import transforms
-import time
-from utils.datasets import letterbox
-from utils.torch_utils import select_device
-from models.experimental import attempt_load
-from utils.plots import output_to_keypoint, plot_skeleton_kpts
-from utils.general import non_max_suppression_kpt, strip_optimizer
-
+from cv_bridge import CvBridge, CvBridgeError
 from deep_sort.deep_sort import DeepSort
+from models.experimental import attempt_load
+from sensor_msgs.msg import Image, CompressedImage
+from torchvision import transforms
+from utils.datasets import letterbox
+from utils.general import non_max_suppression_kpt, strip_optimizer
+from utils.plots import output_to_keypoint, plot_skeleton_kpts
+from utils.torch_utils import select_device
 
+import cv2
+import numpy as np
+import os
+import rospy
+import sys
+import time
+import torch
+
+DEBUG = os.getenv('DEBUG') == 'True'
+if DEBUG:
+    print('[ROS_YOLO] 🪵  debug mode enabled')
+
+ERM_TOPICS = os.getenv('ERM_TOPICS') == 'True'
+if ERM_TOPICS:
+    print('[ROS_YOLO] ⛓️  using ERM topics')
 
 class RosYolo:
     def __init__(self):
 
         # Variables
-        self.POSEWEIGHTS = rospy.get_param("/path_models") + 'yolov7-w6-pose.pt'  #
-        self.DEEPSORT_WEIGHT = rospy.get_param("/path_models") + 'ckpt.t7'  #
+        self.DEEPSORT_WEIGHT = rospy.get_param("/path_models") + '/ckpt.t7'  #
         self.DEVICE = '0'
+        self.POSEWEIGHTS = rospy.get_param("/path_models") + '/yolov7-w6-pose.pt'  #
         self.TOPIC_IMG = rospy.get_param("/topic_img")
 
         self.bridge = CvBridge()
 
-        # select device
+        # Initialize images to display for debug
+        if DEBUG:
+            self.images: list = []
+
+        # Select device
         self.DEVICE = select_device(self.DEVICE)
         # Load model
         self.loading: bool = False
@@ -40,27 +48,52 @@ class RosYolo:
         _ = self.model.eval()
         self.loading = True
         self.cpt = 0
+        if DEBUG:
+            print('[ROS_YOLO] ✅ using poseweights at', self.POSEWEIGHTS)
+            print('[ROS_YOLO] ✅ using deepsort weights at', self.DEEPSORT_WEIGHT)
+            print('[ROS_YOLO] ✅ using device', self.DEVICE)
 
         # DeepSort initialization
         self.deepsort = DeepSort(self.DEEPSORT_WEIGHT, max_dist=0.2, min_confidence=0.3, nms_max_overlap=1.0,
                                  max_iou_distance=0.7, max_age=70, n_init=4, nn_budget=100, use_cuda=True)
+        if DEBUG:
+            print('[ROS_YOLO] ✅ model loaded')
 
         # ROS Topics
-        # self.image_sub = rospy.Subscriber("/usb_cam/image_raw/", Image, self.callback)
-        self.image_sub = rospy.Subscriber(self.TOPIC_IMG, CompressedImage, self.callback)
-        self.kp_bbox_pub = rospy.Publisher("/refined_perception/kp_bbox", BboxKpList, queue_size=0)
+        # TODO mathys investiguer queue_size et faible nombre d'IPS
+        ## Subscribers
+        queue_size = 1
+        if DEBUG:
+            print('[ROS_YOLO] ☑️  queue size of %s'%queue_size)
+        image_sub_type = CompressedImage if ERM_TOPICS else Image
+        self.image_sub = rospy.Subscriber(self.TOPIC_IMG, image_sub_type, self.callback, queue_size=queue_size)
 
+        ## Publishers
+        kp_bbox_pub_topic = "/refined_perception/kp_bbox"
+        self.kp_bbox_pub = rospy.Publisher(kp_bbox_pub_topic, BboxKpList, queue_size=0)
+        if DEBUG:
+            print('[ROS_YOLO] ✅ subscribed to', self.TOPIC_IMG)
+            print('[ROS_YOLO] ✅ publishing at', kp_bbox_pub_topic)
+            print('[ROS_YOLO] ✅ yolo ready')
+
+    # TODO mettre une image sur deux
     @torch.no_grad()
     def callback(self, data):
+        if DEBUG:
+            print('[ROS_YOLO] ☑️  data seq', data.header.seq)
         if self.loading:
             try:
-                pixels = np.asarray(bytearray(data.data), dtype='uint8')
-                cv_image = cv2.imdecode(pixels, cv2.IMREAD_COLOR)
-                # cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")  # (480, 640, 3)
-                # cv_image = np.asarray(self.bridge.imgmsg_to_cv2(data, '8UC1'))
+                if ERM_TOPICS:
+	                pixels = np.asarray(bytearray(data.data), dtype='uint8')
+	                cv_image = cv2.imdecode(pixels, cv2.IMREAD_COLOR)
+	                # cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")  # (480, 640, 3)
+	                # cv_image = np.asarray(self.bridge.imgmsg_to_cv2(data, '8UC1'))
+                else:
+                    cv_image = self.bridge.imgmsg_to_cv2(data, 'bgr8')
                 image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
                 image = letterbox(image, (640), stride=64, auto=True)[0]
-                # print(image.shape)   # (512, 640, 3)
+                if DEBUG:
+                    print('[ROS_YOLO] ☑️  input shape', image.shape)   # (512, 640, 3)
                 image_ = image.copy()
                 image = transforms.ToTensor()(image)
                 image = torch.tensor(np.array([image.numpy()]))
@@ -80,7 +113,8 @@ class RosYolo:
                 im0 = im0.cpu().numpy().astype(np.uint8)
                 # reshape image format to (BGR)
                 im0 = cv2.cvtColor(im0, cv2.COLOR_RGB2BGR)
-                # print(f"output.shape {output.shape}")
+                if DEBUG:
+                    print(f"☑️  output.shape {output.shape}")
                 bbox_per_id = []
                 deepsort_bboxes = []
                 kp_per_id = []
@@ -114,7 +148,18 @@ class RosYolo:
                         self.publish_bbox_kp(bbox_per_id, kp_per_id, deepsort_tracking, assignment_list)
             except CvBridgeError as e:
                 print(e)
-            cv2.imshow("Image window", im0)
+            if DEBUG:
+                self.images.append(im0)
+
+    def main(self):
+        if DEBUG:
+            self.print_result()
+
+    def print_result(self):
+        """ at each frame print every data for the previous frame and save incoming frame """
+        if len(self.images) > 1:
+            image = self.images[-1]
+            cv2.imshow("yolo", image)
             cv2.waitKey(3)
 
     def publish_bbox_kp(self, bbox_per_id_, kp_per_id_, deepsort_tracking_, assignment_list):
@@ -229,9 +274,14 @@ if __name__ == "__main__":
     # rosnode initialization
     rospy.init_node('yolo_module', anonymous=False)
     ros_yolo = RosYolo()
-    time.sleep(0.2)
+    # TODO mathys vérifier que ça n'a pas de conséquences
+    # time.sleep(0.2)
+    while not rospy.is_shutdown():
+        ros_yolo.main()
+    """
     try:
         rospy.spin()
     except KeyboardInterrupt:
-        print("Shutting down")
+        print('[ROS_YOLO] 🛑 shutting down')
     cv2.destroyAllWindows()
+    """
