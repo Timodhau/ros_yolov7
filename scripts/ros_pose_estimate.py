@@ -17,7 +17,9 @@ import sys
 import time
 import torch
 
-DEBUG = os.getenv('DEBUG') == 'True'
+DISPLAY = os.getenv('DISPLAY')
+
+DEBUG = os.getenv('DEBUG') == 'True' and os.getenv('DEBUG_ROS_YOLO') == 'True'
 if DEBUG:
     print('[ROS_YOLO] 🪵  debug mode enabled')
 
@@ -30,9 +32,9 @@ class RosYolo:
 
         # Variables
         self.DEEPSORT_WEIGHT = rospy.get_param("/path_models") + '/ckpt.t7'  #
-        self.DEVICE = '0'
+        self.DEVICE = DISPLAY[1]
         self.POSEWEIGHTS = rospy.get_param("/path_models") + '/yolov7-w6-pose.pt'  #
-        self.TOPIC_IMG = rospy.get_param("/topic_img")
+        self.TOPIC_IMG = rospy.get_param("/topic_img_erm" if ERM_TOPICS else "/topic_img_mdb")
 
         self.bridge = CvBridge()
 
@@ -60,7 +62,6 @@ class RosYolo:
             print('[ROS_YOLO] ✅ model loaded')
 
         # ROS Topics
-        # TODO mathys investiguer queue_size et faible nombre d'IPS
         ## Subscribers
         queue_size = 1
         if DEBUG:
@@ -76,7 +77,6 @@ class RosYolo:
             print('[ROS_YOLO] ✅ publishing at', kp_bbox_pub_topic)
             print('[ROS_YOLO] ✅ yolo ready')
 
-    # TODO mettre une image sur deux
     @torch.no_grad()
     def callback(self, data):
         if DEBUG:
@@ -113,8 +113,6 @@ class RosYolo:
                 im0 = im0.cpu().numpy().astype(np.uint8)
                 # reshape image format to (BGR)
                 im0 = cv2.cvtColor(im0, cv2.COLOR_RGB2BGR)
-                if DEBUG:
-                    print(f"☑️  output.shape {output.shape}")
                 bbox_per_id = []
                 deepsort_bboxes = []
                 kp_per_id = []
@@ -274,8 +272,6 @@ if __name__ == "__main__":
     # rosnode initialization
     rospy.init_node('yolo_module', anonymous=False)
     ros_yolo = RosYolo()
-    # TODO mathys vérifier que ça n'a pas de conséquences
-    # time.sleep(0.2)
     while not rospy.is_shutdown():
         ros_yolo.main()
     """

@@ -13,4 +13,5 @@ torch==2.0.0
 torchvision==0.15.1
 tqdm==4.65.0
 
---find-links https://download.pytorch.org/whl/cu118
+# https://github.com/AUTOMATIC1111/stable-diffusion-webui/issues/8965
+--find-links https://download.pytorch.org/whl/cu117
