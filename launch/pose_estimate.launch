@@ -1,6 +1,6 @@
 <launch>
   <param name="/topic_img_erm" type="str" value="$(env TOPIC_IMG_ERM)" />
   <param name="/topic_img_mdb" type="str" value="$(env TOPIC_IMG_MDB)" />
-  <param name="/path_models" type="str" value="$(env DATA_FOLDER)" />
-  <node name="module_yolo_3" pkg="ros_yolov7" type="ros_pose_estimate.py" respawn="false" output="screen" launch-prefix="$(env ROS_MUDIALBOT_YOLO_PYTHON_PATH)" />
+  <param name="/path_models" type="str" value="$(env CLIENT_DAT_FOLDER)" />
+  <node name="module_yolo" pkg="ros_yolov7" type="ros_pose_estimate.py" respawn="false" output="screen"" />
 </launch>

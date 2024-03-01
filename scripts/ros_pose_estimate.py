@@ -1,6 +1,7 @@
 from body_tracking_msgs.msg import BboxKpList, BboxKp
 from cv_bridge import CvBridge, CvBridgeError
 from deep_sort.deep_sort import DeepSort
+from datetime import datetime
 from models.experimental import attempt_load
 from sensor_msgs.msg import Image, CompressedImage
 from torchvision import transforms
@@ -17,22 +18,23 @@ import sys
 import time
 import torch
 
+DEVICE = os.getenv('DEVICE')
 DISPLAY = os.getenv('DISPLAY')
 
-DEBUG = os.getenv('DEBUG') == 'True' and os.getenv('DEBUG_ROS_YOLO') == 'True'
+DEBUG = os.getenv('DEBUG') == 'True' and os.getenv('DEBUG_YOLO') == 'True'
 if DEBUG:
-    print('[ROS_YOLO] 🪵  debug mode enabled')
+    print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] 🪵  debug mode enabled')
 
 ERM_TOPICS = os.getenv('ERM_TOPICS') == 'True'
 if ERM_TOPICS:
-    print('[ROS_YOLO] ⛓️  using ERM topics')
+    print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ⛓️  using ERM topics')
 
 class RosYolo:
     def __init__(self):
 
         # Variables
         self.DEEPSORT_WEIGHT = rospy.get_param("/path_models") + '/ckpt.t7'  #
-        self.DEVICE = DISPLAY[1]
+        self.DEVICE = DEVICE
         self.POSEWEIGHTS = rospy.get_param("/path_models") + '/yolov7-w6-pose.pt'  #
         self.TOPIC_IMG = rospy.get_param("/topic_img_erm" if ERM_TOPICS else "/topic_img_mdb")
 
@@ -51,21 +53,21 @@ class RosYolo:
         self.loading = True
         self.cpt = 0
         if DEBUG:
-            print('[ROS_YOLO] ✅ using poseweights at', self.POSEWEIGHTS)
-            print('[ROS_YOLO] ✅ using deepsort weights at', self.DEEPSORT_WEIGHT)
-            print('[ROS_YOLO] ✅ using device', self.DEVICE)
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ✅ using poseweights at', self.POSEWEIGHTS)
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ✅ using deepsort weights at', self.DEEPSORT_WEIGHT)
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ✅ using device', self.DEVICE)
 
         # DeepSort initialization
         self.deepsort = DeepSort(self.DEEPSORT_WEIGHT, max_dist=0.2, min_confidence=0.3, nms_max_overlap=1.0,
                                  max_iou_distance=0.7, max_age=70, n_init=4, nn_budget=100, use_cuda=True)
         if DEBUG:
-            print('[ROS_YOLO] ✅ model loaded')
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ✅ model loaded')
 
         # ROS Topics
         ## Subscribers
         queue_size = 1
         if DEBUG:
-            print('[ROS_YOLO] ☑️  queue size of %s'%queue_size)
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ☑️  queue size of %s'%queue_size)
         image_sub_type = CompressedImage if ERM_TOPICS else Image
         self.image_sub = rospy.Subscriber(self.TOPIC_IMG, image_sub_type, self.callback, queue_size=queue_size)
 
@@ -73,14 +75,14 @@ class RosYolo:
         kp_bbox_pub_topic = "/refined_perception/kp_bbox"
         self.kp_bbox_pub = rospy.Publisher(kp_bbox_pub_topic, BboxKpList, queue_size=0)
         if DEBUG:
-            print('[ROS_YOLO] ✅ subscribed to', self.TOPIC_IMG)
-            print('[ROS_YOLO] ✅ publishing at', kp_bbox_pub_topic)
-            print('[ROS_YOLO] ✅ yolo ready')
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ✅ subscribed to', self.TOPIC_IMG)
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ✅ publishing at', kp_bbox_pub_topic)
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ✅ yolo ready')
 
     @torch.no_grad()
     def callback(self, data):
         if DEBUG:
-            print('[ROS_YOLO] ☑️  data seq', data.header.seq)
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ☑️  data seq', data.header.seq)
         if self.loading:
             try:
                 if ERM_TOPICS:
@@ -93,7 +95,7 @@ class RosYolo:
                 image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
                 image = letterbox(image, (640), stride=64, auto=True)[0]
                 if DEBUG:
-                    print('[ROS_YOLO] ☑️  input shape', image.shape)   # (512, 640, 3)
+                    print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ☑️  input shape', image.shape)   # (512, 640, 3)
                 image_ = image.copy()
                 image = transforms.ToTensor()(image)
                 image = torch.tensor(np.array([image.numpy()]))
@@ -145,7 +147,7 @@ class RosYolo:
                                             fontScale=1, color=(255, 0, 0), thickness=2)
                         self.publish_bbox_kp(bbox_per_id, kp_per_id, deepsort_tracking, assignment_list)
             except CvBridgeError as e:
-                print(e)
+                print(fe)
             if DEBUG:
                 self.images.append(im0)
 
@@ -278,6 +280,6 @@ if __name__ == "__main__":
     try:
         rospy.spin()
     except KeyboardInterrupt:
-        print('[ROS_YOLO] 🛑 shutting down')
+        print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] 🛑 shutting down')
     cv2.destroyAllWindows()
     """
