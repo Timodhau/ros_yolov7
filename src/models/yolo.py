@@ -1,14 +1,16 @@
-import argparse
 from copy import deepcopy
-import logging
+from datetime import datetime
 from models.common import *
 from models.experimental import *
-import os
 from utils.autoanchor import check_anchor_order
 from utils.general import make_divisible, check_file, set_logging
 from utils.loss import SigmoidBin
 from utils.torch_utils import time_synchronized, fuse_conv_and_bn, model_info, scale_img, initialize_weights, \
     select_device, copy_attr
+
+import argparse
+import logging
+import os
 import sys
 import torch
 
@@ -20,7 +22,7 @@ try:
 except ImportError:
     thop = None
 
-DEBUG = os.getenv('DEBUG') == 'True'
+DEBUG = os.getenv('DEBUG') == 'True' and os.getenv('DEBUG_ROS_YOLO') == 'True'
 
 class Detect(nn.Module):
     stride = None  # strides computed during build
@@ -609,7 +611,7 @@ class Model(nn.Module):
 
     def fuse(self):  # fuse model Conv2d() + BatchNorm2d() layers
         if DEBUG:
-            print('Fusing layers... ')
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ☑️  fusing layers')
         for m in self.model.modules():
             if isinstance(m, RepConv):
                 #print(f" fuse_repvgg_block")
@@ -626,7 +628,7 @@ class Model(nn.Module):
                 m.forward = m.fuseforward
         self.info()
         if DEBUG:
-            print('Layers fused')
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ☑️  layers fused')
         return self
 
     def nms(self, mode=True):  # add or remove NMS module

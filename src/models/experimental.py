@@ -1,12 +1,14 @@
 from .common import Conv, DWConv
+from datetime import datetime
+from utils.google_utils import attempt_download
+
 import numpy as np
 import os
 import random
 import torch
 import torch.nn as nn
-from utils.google_utils import attempt_download
 
-DEBUG = os.getenv('DEBUG') == 'True'
+DEBUG = os.getenv('DEBUG') == 'True' and os.getenv('DEBUG_ROS_YOLO') == 'True'
 
 class CrossConv(nn.Module):
     # Cross Convolution Downsample
@@ -245,7 +247,7 @@ def attempt_load(weights, map_location=None):
     for w in weights if isinstance(weights, list) else [weights]:
         attempt_download(w)
         if DEBUG:
-            print(f"path {w}")
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ☑️  loading model at path {w}')
         # file = Path(str(w).strip().replace("'", ''))
         # print(f"exists? {file.exists()}")
         ckpt = torch.load(w, map_location=map_location)  # load
