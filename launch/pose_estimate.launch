@@ -2,5 +2,5 @@
   <param name="/topic_img_erm" type="str" value="$(env TOPIC_IMG_ERM)" />
   <param name="/topic_img_mdb" type="str" value="$(env TOPIC_IMG_MDB)" />
   <param name="/path_models" type="str" value="$(env CLIENT_DAT_FOLDER)" />
-  <node name="module_yolo" pkg="ros_yolov7" type="ros_pose_estimate.py" respawn="false" output="screen"" />
+  <node name="module_yolo" pkg="ros_yolov7" type="ros_pose_estimate.py" respawn="false" output="screen" />
 </launch>
