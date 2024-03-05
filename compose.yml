@@ -12,6 +12,13 @@ services:
       dockerfile: $DOCKERFILE
     command: bash -c 'source devel/setup.bash && roslaunch ros_yolov7 pose_estimate.launch'
     container_name: $DOCKER_COMPOSE_CONTAINER_NAME
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              device_ids: ['${DEVICE}']
     env_file: $DOCKER_COMPOSE_ENV_FILE
     network_mode: host
     restart: unless-stopped
