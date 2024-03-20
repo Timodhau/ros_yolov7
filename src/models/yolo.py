@@ -1,24 +1,28 @@
-import argparse
-import logging
-import sys
 from copy import deepcopy
-
-sys.path.append('./')  # to run '$ python *.py' files in subdirectories
-logger = logging.getLogger(__name__)
-import torch
+from datetime import datetime
 from models.common import *
 from models.experimental import *
 from utils.autoanchor import check_anchor_order
 from utils.general import make_divisible, check_file, set_logging
+from utils.loss import SigmoidBin
 from utils.torch_utils import time_synchronized, fuse_conv_and_bn, model_info, scale_img, initialize_weights, \
     select_device, copy_attr
-from utils.loss import SigmoidBin
+
+import argparse
+import logging
+import os
+import sys
+import torch
+
+sys.path.append('./')  # to run '$ python *.py' files in subdirectories
+logger = logging.getLogger(__name__)
 
 try:
     import thop  # for FLOPS computation
 except ImportError:
     thop = None
 
+DEBUG = os.getenv('DEBUG') == 'True' and os.getenv('DEBUG_ROS_YOLO') == 'True'
 
 class Detect(nn.Module):
     stride = None  # strides computed during build
@@ -606,7 +610,8 @@ class Model(nn.Module):
     #             print('%10.3g' % (m.w.detach().sigmoid() * 2))  # shortcut weights
 
     def fuse(self):  # fuse model Conv2d() + BatchNorm2d() layers
-        print('Fusing layers... ')
+        if DEBUG:
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ☑️  fusing layers')
         for m in self.model.modules():
             if isinstance(m, RepConv):
                 #print(f" fuse_repvgg_block")
@@ -622,6 +627,8 @@ class Model(nn.Module):
                 m.fuse()
                 m.forward = m.fuseforward
         self.info()
+        if DEBUG:
+            print(f'[INFO] --- {datetime.now()} -- [ROS_YOLO] ☑️  layers fused')
         return self
 
     def nms(self, mode=True):  # add or remove NMS module
